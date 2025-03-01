@@ -456,7 +456,7 @@
       };
       
       try {
-        const url = 'Hojaprogramaciondepartamentocirugia - copia (3).pdf';
+        const url = 'https://github.com/gusrr27/refractiva/blob/main/Hojaprogramaciondepartamentocirugia%20-%20copia%20(3).pdf';
         const existingPdfBytes = await fetch(url).then(res => res.arrayBuffer());
         const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
         const form = pdfDoc.getForm();
