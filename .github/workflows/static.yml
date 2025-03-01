@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <!-- Meta para dispositivos móviles -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Evaluación de Candidatura a Cirugía Refractiva</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { padding: 20px; }
+    .highlight-cell { background-color: orange !important; color: black; font-weight: bold; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2 class="mb-4">Evaluación de Candidatura a Cirugía Refractiva y Riesgo de Ectasia</h2>
+  
+  <!-- Mensajes de error -->
+  <div id="errorContainer"></div>
+  
+  <form id="evaluacionForm" novalidate>
+    <!-- Datos generales -->
+    <div class="mb-3">
+      <label for="nombre" class="form-label">Nombre del paciente</label>
+      <input type="text" class="form-control" id="nombre" required>
+    </div>
+    <div class="mb-3">
+      <label for="edad" class="form-label">Edad</label>
+      <input type="number" class="form-control" id="edad" required min="1">
+    </div>
+    <div class="mb-3">
+      <label for="ojo" class="form-label">Ojo a tratar</label>
+      <select class="form-select" id="ojo" required>
+        <option value="">Seleccione el ojo</option>
+        <option value="izquierdo">Izquierdo</option>
+        <option value="derecho">Derecho</option>
+      </select>
+    </div>
+    
+    <!-- Procedimiento -->
+    <div class="mb-3">
+      <label for="procedimiento" class="form-label">Procedimiento</label>
+      <select class="form-select" id="procedimiento" required>
+        <option value="">Seleccione el procedimiento</option>
+        <option value="LASIK">LASIK</option>
+        <option value="Femtolasik">Femtolasik</option>
+        <option value="SMILE">SMILE</option>
+        <option value="PRK">PRK</option>
+      </select>
+    </div>
+    <div class="mb-3 hidden" id="flapContainer">
+      <label for="flap" class="form-label">Tamaño del FLAP (micras)</label>
+      <input type="number" class="form-control" id="flap">
+    </div>
+    
+    <!-- Parámetros corneales -->
+    <div class="mb-3">
+      <label for="cct" class="form-label">CCT (micras)</label>
+      <input type="number" step="any" class="form-control" id="cct" required>
+    </div>
+    <div class="mb-3">
+      <label for="zonaOptica" class="form-label">Zona Óptica (mm)</label>
+      <input type="number" step="any" class="form-control" id="zonaOptica" required>
+    </div>
+    <div class="mb-3">
+      <label for="k1" class="form-label">Queratometría K1 (dioptrías)</label>
+      <input type="number" step="any" class="form-control" id="k1" required>
+    </div>
+    <div class="mb-3">
+      <label for="k2" class="form-label">Queratometría K2 (dioptrías)</label>
+      <input type="number" step="any" class="form-control" id="k2" required>
+    </div>
+    
+    <!-- Refracción -->
+    <div class="mb-3">
+      <label for="refractionChoice" class="form-label">Tipo de Refracción</label>
+      <select class="form-select" id="refractionChoice" required>
+        <option value="">Seleccione el tipo</option>
+        <option value="subjetiva">Subjetiva</option>
+        <option value="cicloplejica">Ciclopléjica</option>
+      </select>
+    </div>
+    <div id="subjetivaContainer">
+      <div class="mb-3">
+        <label for="subEsfera" class="form-label">Subjetiva - Esfera</label>
+        <input type="number" step="any" class="form-control" id="subEsfera" required>
+      </div>
+      <div class="mb-3">
+        <label for="subCilindro" class="form-label">Subjetiva - Cilindro</label>
+        <input type="number" step="any" class="form-control" id="subCilindro" required>
+      </div>
+      <div class="mb-3">
+        <label for="subEje" class="form-label">Subjetiva - Eje (grados)</label>
+        <input type="number" step="any" class="form-control" id="subEje" required>
+      </div>
+    </div>
+    <div id="cicloplejicaContainer" class="hidden">
+      <div class="mb-3">
+        <label for="cicloEsfera" class="form-label">Ciclopléjica - Esfera</label>
+        <input type="number" step="any" class="form-control" id="cicloEsfera">
+      </div>
+      <div class="mb-3">
+        <label for="cicloCilindro" class="form-label">Ciclopléjica - Cilindro</label>
+        <input type="number" step="any" class="form-control" id="cicloCilindro">
+      </div>
+    </div>
+    
+    <!-- Otros parámetros -->
+    <div class="mb-3">
+      <label for="topografia" class="form-label">Topografía</label>
+      <select class="form-select" id="topografia" required>
+        <option value="">Seleccione la topografía</option>
+        <option value="normal">Normal</option>
+        <option value="asymmetric">Asimétrica</option>
+        <option value="inferior">Inferior</option>
+        <option value="abnormal">Anormal</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="tbi" class="form-label">TBI</label>
+      <input type="number" step="any" class="form-control" id="tbi" required>
+    </div>
+    
+    <button type="button" id="evaluarButton" class="btn btn-primary">Evaluar</button>
+  </form>
+  
+  <!-- Tabla de resultados -->
+  <div class="mt-4" id="resultadosContainer" style="display:none;">
+    <table class="table table-bordered">
+      <thead class="table-light">
+        <tr>
+          <th>Munnerlyn (micras)</th>
+          <th>PTA (%)</th>
+          <th>Candidato</th>
+          <th>TBI</th>
+          <th>Estroma Residual (micras)</th>
+          <th>R. Ectasia (puntos)</th>
+          <th>Riesgo</th>
+          <th>Observaciones</th>
+          <th>Programar Paciente</th>
+        </tr>
+      </thead>
+      <tbody id="tablaResultados"></tbody>
+    </table>
+  </div>
+  
+  <!-- Botón LENTICULO (para SMILE) -->
+  <div class="mt-4" id="lenticuloButtonContainer" style="display:none;">
+    <button type="button" id="lenticuloButton" class="btn btn-info">LENTICULO</button>
+  </div>
+  
+  <!-- Contenedor de la tabla de lentículo -->
+  <div class="mt-4" id="lenticuloTableContainer" style="display:none;">
+    <h4 id="lenticuloTitle">Lentículo para ZO de 6.5 mm</h4>
+    <div class="table-responsive">
+      <table class="table table-bordered" id="tablaLenticulo">
+        <thead class="table-light" id="lenticuloTableHead"></thead>
+        <tbody id="lenticuloTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+  
+  <!-- Botón para programar paciente -->
+  <div class="mt-4">
+    <button type="button" id="programarPacienteButton" class="btn btn-success">Programar Paciente</button>
+  </div>
+</div>
+
+<!-- Librería pdf-lib -->
+<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+<script>
+  // Función para encontrar el índice del valor más cercano en un arreglo
+  function findClosestIndex(arr, target) {
+    let closestIndex = 0;
+    let minDiff = Math.abs(arr[0] - target);
+    for (let i = 1; i < arr.length; i++) {
+      let diff = Math.abs(arr[i] - target);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestIndex = i;
+      }
+    }
+    return closestIndex;
+  }
+  
+  document.addEventListener("DOMContentLoaded", () => {
+    const evaluacionForm = document.getElementById("evaluacionForm");
+    const errorContainer = document.getElementById("errorContainer");
+    
+    // Mostrar u ocultar contenedores según el tipo de refracción
+    const refractionChoice = document.getElementById("refractionChoice");
+    const subjetivaContainer = document.getElementById("subjetivaContainer");
+    const cicloplejicaContainer = document.getElementById("cicloplejicaContainer");
+    
+    refractionChoice.addEventListener("change", () => {
+      if(refractionChoice.value === "cicloplejica") {
+        cicloplejicaContainer.classList.remove("hidden");
+        subjetivaContainer.classList.add("hidden");
+        document.getElementById("cicloEsfera").setAttribute("required", "true");
+        document.getElementById("cicloCilindro").setAttribute("required", "true");
+        document.getElementById("subEsfera").removeAttribute("required");
+        document.getElementById("subCilindro").removeAttribute("required");
+        document.getElementById("subEje").removeAttribute("required");
+      } else {
+        subjetivaContainer.classList.remove("hidden");
+        cicloplejicaContainer.classList.add("hidden");
+        document.getElementById("subEsfera").setAttribute("required", "true");
+        document.getElementById("subCilindro").setAttribute("required", "true");
+        document.getElementById("subEje").setAttribute("required", "true");
+        document.getElementById("cicloEsfera").removeAttribute("required");
+        document.getElementById("cicloCilindro").removeAttribute("required");
+      }
+    });
+    
+    // Mostrar/ocultar contenedores según el procedimiento seleccionado
+    document.getElementById("procedimiento").addEventListener("change", function() {
+      const proc = this.value;
+      if (proc === "LASIK" || proc === "Femtolasik") {
+        document.getElementById("flapContainer").classList.remove("hidden");
+        document.getElementById("flap").setAttribute("required", "true");
+      } else {
+        document.getElementById("flapContainer").classList.add("hidden");
+        document.getElementById("flap").removeAttribute("required");
+      }
+      if (proc === "SMILE") {
+        document.getElementById("lenticuloButtonContainer").style.display = "block";
+      } else {
+        document.getElementById("lenticuloButtonContainer").style.display = "none";
+        document.getElementById("lenticuloTableContainer").style.display = "none";
+      }
+    });
+    
+    const showError = message => { errorContainer.innerHTML = `<div class="alert alert-danger">${message}</div>`; };
+    const clearError = () => { errorContainer.innerHTML = ""; };
+    const getNumericValue = id => parseFloat(document.getElementById(id).value);
+    
+    // Datos CSV para lentículo (se deben completar las filas necesarias)
+    const csvLenticuloData65 = [
+      ["Lentículo para ZO de 6.5 mm", "0", "-0.25", "-0.5", "-0.75", "-1", "-1.25", "-1.5", "-1.75", "-2", "-2.25", "-2.5", "-2.75", "-3", "-3.25", "-3.5", "-3.75", "-4", "-4.25", "-4.5", "-4.75", "-5"],
+      ["-10", "159", "167", "170", "173", "176", "179", "182", "185", "188", "191", "194", "197", "200", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"]
+    ];
+    
+    const csvLenticuloData60 = [
+      ["Lentículo para ZO de 6.0 mm", "0", "-0.25", "-0.5", "-0.75", "-1", "-1.25", "-1.5", "-1.75", "-2", "-2.25", "-2.5", "-2.75", "-3", "-3.25", "-3.5", "-3.75", "-4", "-4.25", "-4.5", "-4.75", "-5"],
+      ["-10", "136", "143", "145", "148", "151", "153", "156", "158", "161", "163", "166", "168", "170", "173", "175", "178", "180", "183", "185", "187", "190"]
+    ];
+    
+    document.getElementById("evaluarButton").addEventListener("click", () => {
+      clearError();
+      if (!evaluacionForm.checkValidity()) {
+        evaluacionForm.reportValidity();
+        return;
+      }
+      try {
+        evaluarPaciente();
+      } catch (error) {
+        showError("Error durante la evaluación: " + error.message);
+      }
+    });
+    
+    function evaluarPaciente() {
+      console.log("Evaluar button pressed");
+      const edad = getNumericValue("edad");
+      const cct = getNumericValue("cct");
+      const zonaOptica = getNumericValue("zonaOptica");
+      const k1 = getNumericValue("k1");
+      const k2 = getNumericValue("k2");
+      const KM = (k1 + k2) / 2;
+      let esferaCalc, cilindroCalc;
+      if (document.getElementById("refractionChoice").value === "cicloplejica") {
+        esferaCalc = getNumericValue("cicloEsfera");
+        cilindroCalc = getNumericValue("cicloCilindro");
+      } else {
+        esferaCalc = getNumericValue("subEsfera");
+        cilindroCalc = getNumericValue("subCilindro");
+      }
+      if (cilindroCalc > 0) { cilindroCalc = -Math.abs(cilindroCalc); }
+      if (esferaCalc > 0) { esferaCalc = -esferaCalc; }
+      const MRSE = esferaCalc + (cilindroCalc / 2);
+      const AD = (Math.pow(zonaOptica, 2) * Math.abs(MRSE)) / 3;
+      let PTA = 0;
+      const proc = document.getElementById("procedimiento").value;
+      const residual = cct - AD;
+      const queratometriaValida = (KM >= 40 && KM <= 48);
+      const tbi = getNumericValue("tbi");
+      let observaciones = "";
+      
+      if ((proc === "LASIK" || proc === "Femtolasik") && document.getElementById("flap").value === "") {
+        showError("Ingrese el tamaño del FLAP.");
+        return;
+      }
+      
+      if (proc === "LASIK" || proc === "Femtolasik") {
+        const FT = getNumericValue("flap");
+        PTA = ((FT + AD) / cct) * 100;
+        const candidato = (residual >= 300) && (PTA < 40) && queratometriaValida;
+        const topografia = document.getElementById("topografia").value;
+        const riskScore = calcularRandlemanScore(edad, residual, cct, MRSE, topografia);
+        const riskCategory = determinarRiesgo(riskScore);
+        mostrarResumen(AD, PTA, candidato, tbi, residual, riskScore, riskCategory, observaciones);
+      } else if (proc === "PRK") {
+        PTA = (AD / cct) * 100;
+        const candidato = (residual >= 300) && queratometriaValida;
+        const topografia = document.getElementById("topografia").value;
+        const riskScore = calcularRandlemanScore(edad, residual, cct, MRSE, topografia);
+        const riskCategory = determinarRiesgo(riskScore);
+        if (AD > 50) { observaciones = "Se necesitará Mitomicina C"; }
+        mostrarResumen(AD, PTA, candidato, tbi, residual, riskScore, riskCategory, observaciones);
+      } else if (proc === "SMILE") {
+        PTA = (AD / cct) * 100;
+        const candidato = (residual >= 300) && (PTA < 40) && queratometriaValida;
+        const topografia = document.getElementById("topografia").value;
+        const riskScore = calcularRandlemanScore(edad, residual, cct, MRSE, topografia);
+        const riskCategory = determinarRiesgo(riskScore);
+        mostrarResumen(AD, PTA, candidato, tbi, residual, riskScore, riskCategory, observaciones);
+      }
+    }
+    
+    function calcularRandlemanScore(age, residual, cct, MRSE, topografia) {
+      let score = 0;
+      if (topografia === "abnormal") { score += 4; }
+      else if (topografia === "inferior") { score += 3; }
+      else if (topografia === "asymmetric") { score += 1; }
+      else if (topografia === "normal") { score += 0; }
+      if (residual < 240) { score += 4; }
+      else if (residual >= 240 && residual <= 259) { score += 3; }
+      else if (residual >= 260 && residual <= 279) { score += 2; }
+      else if (residual >= 280 && residual <= 290) { score += 1; }
+      else if (residual >= 300) { score += 0; }
+      if (age >= 18 && age <= 21) { score += 3; }
+      else if (age >= 22 && age <= 25) { score += 2; }
+      else if (age >= 26 && age <= 29) { score += 1; }
+      else if (age >= 30) { score += 0; }
+      if (cct < 450) { score += 4; }
+      else if (cct >= 451 && cct <= 480) { score += 3; }
+      else if (cct >= 481 && cct <= 510) { score += 2; }
+      else if (cct > 510) { score += 0; }
+      if (MRSE <= -14) { score += 4; }
+      else if (MRSE > -14 && MRSE <= -12) { score += 3; }
+      else if (MRSE > -12 && MRSE <= -10) { score += 2; }
+      else if (MRSE > -10 && MRSE <= -8) { score += 1; }
+      else if (MRSE > -8) { score += 0; }
+      return score;
+    }
+    
+    function determinarRiesgo(score) {
+      if (score <= 2) { return "Bajo riesgo"; }
+      else if (score === 3) { return "Riesgo moderado"; }
+      else { return "Alto riesgo"; }
+    }
+    
+    function mostrarResumen(AD, PTA, candidato, tbi, residual, riskScore, riskCategory, observations) {
+      const tbiHTML = tbi >= 0.5 ? `<td class="highlight-cell">${tbi.toFixed(2)}</td>` : `<td>${tbi.toFixed(2)}</td>`;
+      const residualHTML = residual < 300 ? `<td class="highlight-cell">${residual.toFixed(2)}</td>` : `<td>${residual.toFixed(2)}</td>`;
+      const tabla = document.getElementById("tablaResultados");
+      tabla.innerHTML = `
+        <tr>
+          <td>${AD.toFixed(2)}</td>
+          <td>${PTA.toFixed(2)}</td>
+          <td>${candidato ? "Sí" : "No"}</td>
+          ${tbiHTML}
+          ${residualHTML}
+          <td>${riskScore}</td>
+          <td>${riskCategory}</td>
+          <td>${observations}</td>
+          <td><button class="btn btn-secondary" id="btnProgramarPaciente">Programar Paciente</button></td>
+        </tr>
+      `;
+      document.getElementById("resultadosContainer").style.display = "block";
+      
+      // Asignar evento al botón recién agregado
+      document.getElementById("btnProgramarPaciente").addEventListener("click", fillPdf);
+    }
+    
+    // Función para construir la tabla del lentículo y resaltar la celda correspondiente
+    function displayLenticuloTable(data, matchingRow, matchingCol) {
+      const tableHead = document.getElementById("lenticuloTableHead");
+      const tableBody = document.getElementById("lenticuloTableBody");
+      tableHead.innerHTML = "";
+      tableBody.innerHTML = "";
+      if (data.length === 0) {
+        showError("No hay datos en la tabla de lentículo.");
+        return;
+      }
+      let headerHTML = "<tr>";
+      data[0].forEach((cell, j) => {
+        headerHTML += (j === matchingCol) ? `<th class="highlight-cell">${cell}</th>` : `<th>${cell}</th>`;
+      });
+      headerHTML += "</tr>";
+      tableHead.innerHTML = headerHTML;
+      for (let i = 1; i < data.length; i++) {
+        let rowHTML = "<tr>";
+        data[i].forEach((cell, j) => {
+          rowHTML += (i === matchingRow && j === matchingCol) ? `<td class="highlight-cell">${cell}</td>` : `<td>${cell}</td>`;
+        });
+        rowHTML += "</tr>";
+        tableBody.innerHTML += rowHTML;
+      }
+      document.getElementById("lenticuloTableContainer").style.display = "block";
+    }
+    
+    // Evento para el botón "LENTICULO" (solo para SMILE)
+    document.getElementById("lenticuloButton").addEventListener("click", () => {
+      const zonaOpticaValue = parseFloat(document.getElementById("zonaOptica").value);
+      let tableToUse;
+      if (zonaOpticaValue === 6.0) {
+        tableToUse = csvLenticuloData60;
+        document.getElementById("lenticuloTitle").textContent = "Lentículo para ZO de 6.0 mm";
+      } else {
+        tableToUse = csvLenticuloData65;
+        document.getElementById("lenticuloTitle").textContent = "Lentículo para ZO de 6.5 mm";
+      }
+      let calculatedSphere, calculatedCylinder;
+      if (document.getElementById("refractionChoice").value === "cicloplejica") {
+        calculatedSphere = parseFloat(document.getElementById("cicloEsfera").value);
+        calculatedCylinder = parseFloat(document.getElementById("cicloCilindro").value);
+      } else {
+        calculatedSphere = parseFloat(document.getElementById("subEsfera").value);
+        calculatedCylinder = parseFloat(document.getElementById("subCilindro").value);
+      }
+      if (calculatedCylinder > 0) { calculatedCylinder = -Math.abs(calculatedCylinder); }
+      if (calculatedSphere > 0) { calculatedSphere = -calculatedSphere; }
+      let cylinderHeaders = [];
+      for (let j = 1; j < tableToUse[0].length; j++) {
+        cylinderHeaders.push(parseFloat(tableToUse[0][j]));
+      }
+      let sphereValues = [];
+      for (let i = 1; i < tableToUse.length; i++) {
+        sphereValues.push(parseFloat(tableToUse[i][0]));
+      }
+      let closestSphereIndex = findClosestIndex(sphereValues, calculatedSphere);
+      let closestCylinderIndex = findClosestIndex(cylinderHeaders, calculatedCylinder);
+      displayLenticuloTable(tableToUse, closestSphereIndex + 1, closestCylinderIndex + 1);
+    });
+    
+    // Función para generar el PDF utilizando pdf-lib
+    async function fillPdf() {
+      const formData = {
+        expediente: "",  
+        nombre: document.getElementById("nombre").value,
+        fechaprogramacion: new Date().toLocaleDateString(),
+        nacimiento: "",  
+        subjetivaesfera: document.getElementById("subEsfera").value,
+        subjetivocyl: document.getElementById("subCilindro").value,
+        subjetivaeje: document.getElementById("subEje").value,
+        paqui: document.getElementById("cct").value,
+        topok1: document.getElementById("k1").value,
+        topok2: document.getElementById("k2").value,
+        medico: "",
+        esferaprogramada: "",
+        cylprogramado: "",
+        ejeprogramado: "",
+        tipodecirugia: document.getElementById("procedimiento").value
+      };
+      
+      try {
+        const url = 'https://github.com/gusrr27/refractiva/blob/main/Hojaprogramaciondepartamentocirugia%20-%20copia%20(3).pdf';
+        const existingPdfBytes = await fetch(url).then(res => res.arrayBuffer());
+        const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+        const form = pdfDoc.getForm();
+        
+        form.getTextField('nombre').setText(formData.nombre);
+        form.getTextField('fechaprogramacion').setText(formData.fechaprogramacion);
+        form.getTextField('subjetivaesfera').setText(formData.subjetivaesfera);
+        form.getTextField('subjetivocyl').setText(formData.subjetivocyl);
+        form.getTextField('subjetivaeje').setText(formData.subjetivaeje);
+        form.getTextField('paqui').setText(formData.paqui);
+        form.getTextField('topok1').setText(formData.topok1);
+        form.getTextField('topok2').setText(formData.topok2);
+        form.getTextField('medico').setText(formData.medico);
+        form.getTextField('esferaprogramada').setText(formData.esferaprogramada);
+        form.getTextField('cylprogramado').setText(formData.cylprogramado);
+        form.getTextField('ejeprogramado').setText(formData.ejeprogramado);
+        form.getTextField('tipodecirugia').setText(formData.tipodecirugia);
+        
+        const pdfBytes = await pdfDoc.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const urlBlob = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = urlBlob;
+        a.download = 'ProgramacionCirugia.pdf';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch (err) {
+        showError("Error al generar el PDF: " + err.message);
+      }
+    }
+    
+    document.getElementById("programarPacienteButton").addEventListener("click", fillPdf);
+  });
+</script>
+</body>
+</html>
